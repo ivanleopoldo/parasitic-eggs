@@ -5,3 +5,7 @@ runs/
 cropped_results/
 *.png
 *.jpg
+*.keras
+*.pt
+models/
+__pycache__/
