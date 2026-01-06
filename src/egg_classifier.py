@@ -11,7 +11,10 @@ class EggClassifier:
         class_names=["Ascaris lumbricoides", "Hookworm egg", "Trichuris trichiura"],
         input_size=(224, 224),
     ):
-        self.model = load_model(model_path, custom_objects=custom_objects)
+        if(isinstance(model_path, str)):
+            self.model = load_model(model_path, custom_objects=custom_objects)
+        else:
+            self.model = model_path
         self.class_names = class_names
         self.input_size = input_size
 

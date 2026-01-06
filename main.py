@@ -1,11 +1,20 @@
 import io
 from PIL import Image, ImageDraw, ImageFont
 import uvicorn
+from huggingface_hub import hf_hub_download
+import os
+os.environ["KERAS_BACKEND"] = "tensorflow"
+
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from src import EggClassifier, EggDetector
+
+resnet50 = hf_hub_download(
+    repo_id="milktt1/resnet50-parasitic-egg-detection",
+    filename="resnet50-trained.keras"
+)
 
 app = FastAPI()
 
@@ -17,17 +26,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-detector = EggDetector(model_path="./models/yolov8-trained.pt")
+model_path = hf_hub_download(repo_id="milktt1/yolov8-parasitic-detection", filename="yolov8-trained.pt")
+
+detector = EggDetector(model_path=model_path)
 classifier = EggClassifier(
-    model_path="./models/resnet50-trained.keras",
+    model_path=resnet50
 )
 
 @app.get("/")
 def root():
     return {"message": "successful"}
-
-
-from PIL import Image, ImageDraw, ImageFont
 
 def draw_boxes(image: Image.Image, results: list):
     draw = ImageDraw.Draw(image)

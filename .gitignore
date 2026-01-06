@@ -1,5 +1,6 @@
 env/
 yolov8n.pt
+models/
 samples/
 runs/
 cropped_results/
@@ -10,3 +11,4 @@ cropped_results/
 models/
 __pycache__/
 .DS_Store
+.env
