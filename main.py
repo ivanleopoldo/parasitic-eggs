@@ -1,11 +1,9 @@
 import io
-
-import tensorflow as tf
+from PIL import Image, ImageDraw, ImageFont
 import uvicorn
 from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image
-from tensorflow.keras.losses import Loss
+from fastapi.responses import StreamingResponse
 
 from src import EggClassifier, EggDetector
 
@@ -19,59 +17,57 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-class FocalLoss(Loss):
-    def __init__(self, gamma=2.0, alpha=0.25, name="focal_loss", **kwargs):
-        super().__init__(name=name, **kwargs)
-        self.gamma = gamma
-        self.alpha = alpha
-
-    def call(self, y_true, y_pred):
-        epsilon = tf.keras.backend.epsilon()
-        y_pred = tf.clip_by_value(y_pred, epsilon, 1.0 - epsilon)
-
-        cross_entropy = -y_true * tf.math.log(y_pred)
-        weight = self.alpha * tf.pow(1.0 - y_pred, self.gamma)
-        focal_loss_value = weight * cross_entropy
-
-        return tf.reduce_mean(tf.reduce_sum(focal_loss_value, axis=-1))
-
-    def get_config(self):
-        config = super().get_config()
-        config.update({"gamma": self.gamma, "alpha": self.alpha})
-        return config
-
-
-detector = EggDetector(model_path="./models/yolov8-finetuned.pt")
+detector = EggDetector(model_path="./models/yolov8-trained.pt")
 classifier = EggClassifier(
-    model_path="./models/resnet_model_focalloss.keras",
-    custom_objects={"FocalLoss": FocalLoss},
+    model_path="./models/resnet50-trained.keras",
 )
-
 
 @app.get("/")
 def root():
     return {"message": "successful"}
 
 
+from PIL import Image, ImageDraw, ImageFont
+
+def draw_boxes(image: Image.Image, results: list):
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.load_default(28)
+
+    for item in results:
+        x1, y1, x2, y2 = item["bbox"]
+        label = f"{item['classification']['class_name']} {item['classification']['confidence']*100:.1f}%"
+
+        draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
+
+        bbox = draw.textbbox((0, 0), label, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+
+        draw.rectangle([x1, y1 - text_height, x1 + text_width, y1], fill="red")
+
+        draw.text((x1, y1 - text_height), label, fill="white", font=font)
+
+    return image
+
+
+
+
 @app.post("/predict")
 async def predict(file: UploadFile):
     contents = await file.read()
-
-    image = Image.open(io.BytesIO(contents))
+    image = Image.open(io.BytesIO(contents)).convert("RGB")
 
     results = detector.detect_eggs(image)
+
     classified = classifier.classify_eggs(results)
 
-    retval = [
-        {
-            "class": i["classification"]["class_name"],
-            "conf": i["classification"]["confidence"],
-        }
-        for i in classified
-    ]
+    image_with_boxes = draw_boxes(image, classified)
 
-    return retval
+    img_bytes = io.BytesIO()
+    image_with_boxes.save(img_bytes, format="PNG")
+    img_bytes.seek(0)
+
+    return StreamingResponse(img_bytes, media_type="image/png")
 
 
 if __name__ == "__main__":

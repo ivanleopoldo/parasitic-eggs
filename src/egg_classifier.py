@@ -7,7 +7,7 @@ class EggClassifier:
     def __init__(
         self,
         model_path,
-        custom_objects,
+        custom_objects = {},
         class_names=["Ascaris lumbricoides", "Hookworm egg", "Trichuris trichiura"],
         input_size=(224, 224),
     ):
