@@ -2,7 +2,7 @@ from ultralytics import YOLO
 
 
 class EggDetector:
-    def __init__(self, model_path, conf_threshold=0.7):
+    def __init__(self, model_path, conf_threshold=0.2):
         self.model = YOLO(model_path)
         self.conf_threshold = conf_threshold
 

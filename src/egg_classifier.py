@@ -1,6 +1,6 @@
 import numpy as np
-from tensorflow.keras.applications.resnet50 import preprocess_input
-from tensorflow.keras.models import load_model
+from keras.applications.resnet50 import preprocess_input
+from keras.models import load_model
 
 
 class EggClassifier:
@@ -29,6 +29,11 @@ class EggClassifier:
                 predicted_class_idx = np.argmax(predictions[0])
                 confidence = float(predictions[0][predicted_class_idx])
                 class_name = self.class_names[predicted_class_idx]
+
+                if(confidence < 0.7):
+                    class_name = "unknown"
+                    predicted_class_idx = -1
+                    confidence = 0.0
 
                 result = crop_info.copy()
                 result["classification"] = {
