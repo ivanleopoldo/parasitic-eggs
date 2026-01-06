@@ -16,16 +16,23 @@ import base64
 
 from src import EggClassifier, EggDetector
 
-HF_TOKEN = os.environ['HF_TOKEN']
 
-resnet50_model_path = hf_hub_download(
-    repo_id="milktt1/resnet50-parasitic-egg-detection",
-    filename="resnet50-trained.keras",
-    local_dir="models",
-    token=HF_TOKEN
-)
+if not os.path.isfile('./models/yolov8-trained.pt'):
+    HF_TOKEN = os.environ['HF_TOKEN']
 
-yolov8_model_path = hf_hub_download(repo_id="milktt1/yolov8-parasitic-detection", local_dir="models", filename="yolov8-trained.pt", token=HF_TOKEN)
+    yolov8_model_path = hf_hub_download(repo_id="milktt1/yolov8-parasitic-detection", local_dir="models", filename="yolov8-trained.pt", token=HF_TOKEN)
+else:
+    yolov8_model_path = './models/yolov8-trained.pt'
+
+if not os.path.isfile('./models/resnet50-trained.keras'):
+    resnet50_model_path = hf_hub_download(
+        repo_id="milktt1/resnet50-parasitic-egg-detection",
+        filename="resnet50-trained.keras",
+        local_dir="models",
+        token=HF_TOKEN
+    )
+else:
+    resnet50_model_path = './models/resnet50-trained.keras'
 
 app = FastAPI()
 
