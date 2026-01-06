@@ -9,3 +9,4 @@ cropped_results/
 *.pt
 models/
 __pycache__/
+.DS_Store
