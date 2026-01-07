@@ -1,5 +1,6 @@
 import io
 from PIL import Image, ImageDraw, ImageFont
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from huggingface_hub import hf_hub_download
 import os
@@ -88,7 +89,7 @@ def serialize_results(results):
     return serialized
 
 
-@app.post("/predict")
+@app.post("/api/predict")
 async def predict(file: UploadFile):
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -109,7 +110,7 @@ async def predict(file: UploadFile):
         "results": serialize_results(classified)
     }
 
-@app.post("/detect")
+@app.post("/api/detect")
 async def detect(file: UploadFile):
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -127,6 +128,8 @@ async def detect(file: UploadFile):
         "image": encoded_img,
         "results": serialize_results(results)
     }
+
+# app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8000, reload=True)
